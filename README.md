@@ -1,2 +1,2 @@
 # bmendonca3.github.io
-[click here]([www.google.com](https://bmendonca3.github.io//prototype-1/))
+[Prototype 1]([https://bmendonca3.github.io//prototype-1/])
