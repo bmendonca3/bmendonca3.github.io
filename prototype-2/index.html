@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Comment Log Prototype</title>
+    <style>
+        /* --- General Setup & Theming --- */
+        :root {
+            /* Define reusable spacing, sizes, and colors for consistency */
+            --spacing-unit: 8px;
+            --border-radius-container: 10px;
+            --border-radius-element: 5px;
+            --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --color-primary: #007bff;    /* Main action color */
+            --color-secondary: #6c757d; /* Secondary action/edit color */
+            --color-success: #28a745;   /* Confirmation messages */
+            --color-error: #dc3545;     /* Error messages */
+            --color-text: #212529;      /* Main text */
+            --color-text-light: #6c757d; /* Lighter text (dates, counters) */
+            --color-text-lighter: #adb5bd;/* Placeholder text */
+            --color-border: #ced4da;    /* Standard borders */
+            --color-border-light: #e9ecef;/* Lighter borders (dividers, disabled state) */
+            --color-bg: #f8f9fa;        /* Page background */
+        }
+
+        /* Basic reset for consistent styling across browsers */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; /* Base font size */ }
+
+        body {
+            font-family: var(--font-sans);
+            display: flex;
+            justify-content: center; /* Center the main container horizontally */
+            align-items: flex-start; /* Align container to the top */
+            min-height: 100vh;       /* Ensure body takes at least full viewport height */
+            background-color: var(--color-bg);
+            padding: calc(var(--spacing-unit) * 3); /* Give some breathing room around the container */
+            color: var(--color-text);
+            line-height: 1.6;        /* Improve readability */
+        }
+
+        /* --- Main Container --- */
+        .comment-log-container {
+            background-color: #ffffff; /* White background for the card */
+            padding: calc(var(--spacing-unit) * 4) calc(var(--spacing-unit) * 5); /* Generous internal padding */
+            border-radius: var(--border-radius-container);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); /* Subtle shadow for depth */
+            width: 100%;
+            max-width: 600px; /* Limit width for readability, especially on larger screens */
+        }
+
+        /* --- Daily Entry Section --- */
+        .daily-entry {
+            text-align: center; /* Center title and button */
+            margin-bottom: calc(var(--spacing-unit) * 4); /* Space between entry section and history */
+            padding-bottom: calc(var(--spacing-unit) * 3); /* Space below the button */
+            border-bottom: 1px solid var(--color-border-light); /* Visual separator */
+        }
+
+        .daily-entry h2 {
+            margin-top: 0;
+            color: var(--color-text);
+            margin-bottom: calc(var(--spacing-unit) * 1);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .current-date {
+             font-size: 0.95rem;
+             color: var(--color-text-light);
+             margin-bottom: calc(var(--spacing-unit) * 3); /* Space below date */
+        }
+
+        /* Styles for the comment input area */
+        .comment-area {
+            margin-bottom: calc(var(--spacing-unit) * 2.5);
+            text-align: left; /* Align label (if visible) and textarea content left */
+        }
+
+        /* Accessibility: Hide the label visually but keep it for screen readers */
+        .comment-label {
+             border: 0; clip: rect(0 0 0 0); height: 1px; margin: -1px;
+             overflow: hidden; padding: 0; position: absolute; width: 1px;
+             white-space: nowrap; /* Prevent wrapping */
+        }
+
+        #commentField {
+            width: 100%;
+            min-height: 100px; /* Decent starting height */
+            padding: calc(var(--spacing-unit) * 1.5);
+            border: 1px solid var(--color-border);
+            border-radius: var(--border-radius-element);
+            font-family: var(--font-sans); /* Inherit body font */
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--color-text);
+            background-color: #ffffff;
+            resize: vertical; /* Allow user to resize vertically */
+            transition: border-color 0.2s ease;
+            margin-bottom: calc(var(--spacing-unit) * 0.5); /* Small space before counter */
+        }
+        #commentField::placeholder { color: var(--color-text-lighter); opacity: 0.9; }
+        #commentField:focus {
+            /* Provide visual feedback when the textarea is focused */
+            outline: none; /* Remove default browser outline */
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15); /* Subtle glow */
+        }
+        #commentField:disabled {
+            /* Style for when the user can't edit (e.g., after saving) */
+            background-color: var(--color-border-light);
+            opacity: 0.8;
+            cursor: not-allowed;
+        }
+
+        /* Character counter below the textarea */
+        .char-counter {
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+            text-align: right;
+            display: block; /* Ensure it takes its own line */
+            min-height: 1em; /* Prevent layout shift when empty */
+        }
+
+        /* Area holding the main action button */
+        .button-area { text-align: center; margin-top: var(--spacing-unit); }
+
+        /* Main button style for Save/Edit actions */
+        .action-button {
+            display: inline-block; /* Allows setting width/padding */
+            color: white;
+            background-color: var(--color-primary); /* Default: Save */
+            padding: 10px 25px;
+            border: none;
+            border-radius: var(--border-radius-element);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            min-width: 140px; /* Consistent button width */
+            text-align: center;
+        }
+        .action-button:hover { background-color: #0056b3; /* Darker shade on hover */ }
+
+        /* Specific style for the 'Edit' state */
+        .action-button.edit { background-color: var(--color-secondary); }
+        .action-button.edit:hover { background-color: #5a6268; }
+
+        /* Subtle feedback on click */
+        .action-button:active { transform: scale(0.98); }
+
+        /* Style for when the button is inactive */
+        .action-button:disabled {
+             background-color: #adb5bd;
+             cursor: not-allowed;
+             transform: scale(1); /* Prevent active transform when disabled */
+         }
+
+        /* Area for displaying success/error messages after actions */
+        .confirmation-message {
+            text-align: center;
+            color: var(--color-success); /* Default: Success color */
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-height: 1.5em; /* Prevent layout shifts when message appears/disappears */
+            margin-top: calc(var(--spacing-unit) * 1.5);
+        }
+
+        /* --- History Section --- */
+        .history-section {
+            margin-top: calc(var(--spacing-unit) * 3); /* Space above the history title */
+        }
+
+        .history-section h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: calc(var(--spacing-unit) * 2);
+            text-align: left; /* Align history title left */
+        }
+
+        /* The list holding past comment entries */
+        #pastCommentsList {
+            list-style: none; /* Remove default bullet points */
+            padding: 0;
+            margin: 0;
+            max-height: 250px; /* Limit height to prevent excessive scrolling */
+            overflow-y: auto;  /* Add scrollbar if content exceeds max-height */
+             /* Optional: Style the scrollbar for a cleaner look */
+             scrollbar-width: thin; /* Firefox */
+             scrollbar-color: var(--color-border) transparent; /* Firefox */
+        }
+         /* Webkit scrollbar styling (Chrome, Safari, Edge) */
+         #pastCommentsList::-webkit-scrollbar { width: 5px; }
+         #pastCommentsList::-webkit-scrollbar-track { background: transparent; }
+         #pastCommentsList::-webkit-scrollbar-thumb {
+             background-color: var(--color-border);
+             border-radius: 3px;
+         }
+
+        /* Individual past comment item container */
+        .past-comment-item {
+            background-color: #fdfdff; /* Slightly off-white for visual separation */
+            border: 1px solid var(--color-border-light);
+            border-radius: var(--border-radius-element);
+            padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+            margin-bottom: var(--spacing-unit); /* Space between history items */
+        }
+        .past-comment-item:last-child { margin-bottom: 0; /* Remove margin from the last item */ }
+
+        /* Styling for the date within a past comment item */
+        .past-comment-date {
+            display: block; /* Ensure it takes its own line */
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--color-text-light);
+            margin-bottom: calc(var(--spacing-unit) * 0.5); /* Space between date and text */
+        }
+
+        /* Styling for the actual comment text in the history */
+        .past-comment-text {
+            font-size: 0.95rem;
+            color: var(--color-text-medium); /* Maybe define this color? Using main text for now. */
+            line-height: 1.5;
+            white-space: pre-wrap; /* Respect line breaks entered by the user */
+            word-wrap: break-word; /* Prevent long words from overflowing the container */
+        }
+
+        /* Message shown when there are no past comments to display */
+        #noPastCommentsMessage {
+             display: none; /* Hidden by default, shown via JS */
+             color: var(--color-text-light);
+             font-style: italic;
+             text-align: center;
+             padding: calc(var(--spacing-unit) * 3) 0; /* Give it some space */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="comment-log-container">
+
+        <!-- Section for today's note entry -->
+        <section class="daily-entry">
+            <h2>Daily Note</h2>
+            <div class="current-date" id="currentDate">Loading date...</div>
+
+            <div class="comment-area">
+                <!-- Label is visually hidden but good for accessibility -->
+                <label for="commentField" class="comment-label">Add your note for today.</label>
+                <!-- The main text input area -->
+                <textarea id="commentField" rows="4" placeholder="What's on your mind today?" disabled></textarea>
+                <!-- Shows character count / limit -->
+                <span class="char-counter" id="charCounter">0 / 200</span>
+            </div>
+
+            <div class="button-area">
+                 <!-- The primary action button (Save/Edit) -->
+                 <button class="action-button" id="actionButton" disabled>Loading...</button>
+            </div>
+
+            <!-- Displays confirmation or error messages -->
+            <div class="confirmation-message" id="confirmationMessage"></div>
+        </section>
+
+        <!-- Section for displaying past notes -->
+        <section class="history-section">
+            <h3>Past Notes</h3>
+             <!-- Unordered list where past comments will be dynamically added -->
+             <ul id="pastCommentsList">
+                 <!-- Past comments will be loaded here by JavaScript -->
+             </ul>
+             <!-- Message shown if the list is empty -->
+             <div id="noPastCommentsMessage">
+                 No past notes found for recent weekdays.
+             </div>
+        </section>
+
+    </div>
+
+    <script>
+        // Wait until the entire HTML document is loaded and parsed
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Get References to HTML Elements ---
+            // We get these once and store them in constants for efficiency
+            const commentField = document.getElementById('commentField');             // The textarea for the comment
+            const charCounter = document.getElementById('charCounter');               // Displays character count
+            const actionButton = document.getElementById('actionButton');             // The main Save/Edit button
+            const confirmationMessage = document.getElementById('confirmationMessage'); // Shows success/error messages
+            const currentDateDisplay = document.getElementById('currentDate');        // Shows the formatted current date
+            const pastCommentsList = document.getElementById('pastCommentsList');       // The <ul> for history
+            const noPastCommentsMessage = document.getElementById('noPastCommentsMessage'); // Message when history is empty
+
+            // --- Configuration Settings ---
+            const MAX_COMMENT_LENGTH = 200;         // Character limit for comments
+            const STORAGE_KEY = 'userDailyCommentsLog'; // Key used to store/retrieve data in localStorage. Unique to this app.
+            const DEMO_DATA_FLAG = 'commentDemoDataPopulated'; // Flag in localStorage to check if demo data was added
+            const MAX_PAST_COMMENTS_TO_SHOW = 5;    // How many recent weekday entries to show in history
+            const NUM_DEMO_DAYS = 7;                // How many past days (max) to generate demo data for
+
+            // --- Core Functions ---
+
+            /**
+             * Updates the character counter display below the textarea.
+             * Also changes text color to red if the limit is exceeded.
+             */
+            function updateCharCounter() {
+                const currentLength = commentField.value.length;
+                charCounter.textContent = `${currentLength} / ${MAX_COMMENT_LENGTH}`;
+                // Provide visual feedback if the user goes over the limit
+                charCounter.style.color = currentLength > MAX_COMMENT_LENGTH ? 'var(--color-error)' : 'var(--color-text-light)';
+            }
+
+            /**
+             * Loads all comments stored in localStorage.
+             * @returns {Array} An array of comment objects {date: "YYYY-MM-DD", comment: "Text"}, or an empty array if none found or error occurs.
+             */
+            function loadAllComments() {
+                 try {
+                     const storedData = localStorage.getItem(STORAGE_KEY);
+                     // If data exists, parse it from JSON; otherwise, return an empty array.
+                     return storedData ? JSON.parse(storedData) : [];
+                 } catch (e) {
+                     // Log error if parsing fails (e.g., corrupted data)
+                     console.error("Could not load comments from localStorage:", e);
+                     return []; // Return empty array to prevent crashing
+                 }
+            }
+
+             /**
+              * Saves or updates a comment for a specific date in localStorage.
+              * Manages the array of comments, ensuring dates are unique and sorted.
+              * @param {string} dateKey - The date in "YYYY-MM-DD" format.
+              * @param {string} commentText - The comment text to save.
+              * @returns {boolean} True if save was successful, false otherwise.
+              */
+             function saveCommentToStorage(dateKey, commentText) {
+                 let allComments = loadAllComments(); // Get the current list
+                 const entry = { date: dateKey, comment: commentText };
+
+                 // Check if an entry for this date already exists
+                 const existingIndex = allComments.findIndex(item => item.date === dateKey);
+
+                 if (existingIndex > -1) {
+                     // If it exists, update the comment for that date
+                     allComments[existingIndex] = entry;
+                     console.log(`Updated comment for ${dateKey}`);
+                 } else {
+                     // If it's a new date, add the new entry
+                     allComments.push(entry);
+                     console.log(`Added new comment for ${dateKey}`);
+                 }
+
+                 // Keep the comments sorted by date, newest first.
+                 // This makes displaying history easier.
+                 allComments.sort((a, b) => b.date.localeCompare(a.date));
+
+                 try {
+                     // Save the updated (and sorted) array back to localStorage
+                     localStorage.setItem(STORAGE_KEY, JSON.stringify(allComments));
+                     return true; // Indicate success
+                 } catch (e) {
+                     // Handle potential storage errors (e.g., quota exceeded)
+                     console.error("Could not save comment to localStorage:", e);
+                     confirmationMessage.textContent = "Error saving note. Storage might be full.";
+                     confirmationMessage.style.color = 'var(--color-error)';
+                     return false; // Indicate failure
+                 }
+             }
+
+
+            /**
+             * Sets the UI state (e.g., ready for new entry, viewing saved entry, editing).
+             * Updates button text, enables/disables fields accordingly.
+             * @param {'new' | 'editing' | 'viewing' | 'loading'} state - The desired UI state.
+             */
+            function setState(state) {
+                // Reset common styles first
+                actionButton.disabled = false;
+                commentField.disabled = true; // Usually disabled, enabled specifically below
+                actionButton.classList.remove('edit'); // Remove edit class by default
+                confirmationMessage.textContent = ''; // Clear previous messages
+
+                switch (state) {
+                    case 'new':
+                        // Ready to accept a new comment for today
+                        actionButton.textContent = 'Save Note';
+                        commentField.disabled = false; // Allow typing
+                        break;
+                    case 'editing':
+                        // User clicked 'Edit', allow changes to existing comment
+                        actionButton.textContent = 'Save Changes';
+                        commentField.disabled = false; // Allow typing
+                        commentField.focus();         // Put cursor in textarea
+                        break;
+                    case 'viewing':
+                        // Displaying a previously saved comment for today
+                        actionButton.textContent = 'Edit Note';
+                        actionButton.classList.add('edit'); // Style button as secondary action
+                        // Keep commentField disabled
+                        break;
+                    default: // Includes 'loading' or any unexpected state
+                        // Initial state while loading data or during processing
+                        actionButton.textContent = 'Loading...';
+                        actionButton.disabled = true;
+                        commentField.disabled = true;
+                        break;
+                }
+            }
+
+
+            function getDateKey(date) {
+                 return date.toISOString().split('T')[0];
+            }
+
+            /**
+             * Checks if a given date falls on a Saturday or Sunday.
+             * Uses UTC day to avoid timezone inconsistencies.
+             * @param {Date} date - The date object to check.
+             * @returns {boolean} True if it's a weekend, false otherwise.
+             */
+            function isWeekend(date) {
+                 const day = date.getUTCDay(); // 0 = Sunday, 6 = Saturday
+                 return day === 0 || day === 6;
+            }
+
+            /**
+             * Formats a Date object into a user-friendly string for display.
+             * @param {Date} date - The date object to format.
+             * @param {'long' | 'short'} [format='long'] - The desired format type.
+             * @returns {string} The formatted date string.
+             */
+            function formatDisplayDate(date, format = 'long') {
+                if (format === 'short') {
+                    // e.g., "Fri, Oct 27"
+                    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                }
+                return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            }
+
+             /**
+              * Renders the list of past comments in the history section.
+              * Filters out today's comment and weekends, limits the count, and updates the DOM.
+              */
+             function renderPastComments() {
+                 const allComments = loadAllComments();
+                 const todayKey = getDateKey(new Date()); // Get today's key to exclude it
+                 pastCommentsList.innerHTML = ''; // Clear the list before adding new items
+
+                 // Process comments:
+                 // 1. Filter out today's entry.
+                 // 2. Filter out entries from weekend days.
+                 // 3. Sort by date descending (already done by save, but good practice).
+                 // 4. Take only the most recent N comments.
+                 const relevantComments = allComments
+                     .filter(item => {
+                         if (item.date === todayKey) return false; // Exclude today
+                         try {
+                             // IMPORTANT: Parse date string as UTC to check weekend consistently
+                             // Adding T12:00:00Z helps avoid timezone shifts placing the date on the wrong day.
+                             const entryDate = new Date(item.date + 'T12:00:00Z');
+                             return !isWeekend(entryDate); // Exclude weekends
+                         } catch (e) {
+                             console.warn(`Skipping invalid date in history: ${item.date}`, e);
+                             return false; // Skip if date is invalid
+                         }
+                     })
+                     // .sort((a, b) => b.date.localeCompare(a.date)) // Already sorted on save, but safe to keep
+                     .slice(0, MAX_PAST_COMMENTS_TO_SHOW); // Limit to the configured number
+
+                 // Show/hide the "no past comments" message based on results
+                 if (relevantComments.length === 0) {
+                     pastCommentsList.style.display = 'none'; // Hide the list
+                     noPastCommentsMessage.style.display = 'block'; // Show the message
+                 } else {
+                     pastCommentsList.style.display = 'block'; // Show the list
+                     noPastCommentsMessage.style.display = 'none'; // Hide the message
+
+                     // Create and append list items for each relevant comment
+                     relevantComments.forEach(item => {
+                         const li = document.createElement('li');
+                         li.className = 'past-comment-item';
+
+                         const dateSpan = document.createElement('span');
+                         dateSpan.className = 'past-comment-date';
+                         // Parse the date string safely again for display formatting
+                         // Use UTC to ensure consistency with the filtering logic
+                         const entryDate = new Date(item.date + 'T12:00:00Z');
+                         dateSpan.textContent = formatDisplayDate(entryDate, 'short'); // Use short format for history
+
+                         const textP = document.createElement('p');
+                         textP.className = 'past-comment-text';
+                         textP.textContent = item.comment; // Display the actual comment
+
+                         li.appendChild(dateSpan);
+                         li.appendChild(textP);
+                         pastCommentsList.appendChild(li); // Add the item to the list
+                     });
+                 }
+             }
+
+             /**
+              * Populates localStorage with some sample comment data for previous weekdays.
+              * Only runs if no comments exist and the demo flag isn't set, to avoid overwriting user data.
+              * Useful for demonstrating the history feature on first use.
+              */
+             function populateDemoComments() {
+                 // Check if demo data has already been added OR if the user has actual data
+                 if (localStorage.getItem(DEMO_DATA_FLAG) || loadAllComments().length > 0) {
+                     return; // Don't add demo data if not needed
+                 }
+
+                 console.log("No comments found. Populating demo comment data for previous weekdays...");
+                 const demoComments = [];
+                 let currentDate = new Date(); // Start from today
+                 let addedCount = 0;
+                 const sampleTexts = [ // Some varied example comments
+                     "Feeling productive today! Finished the report.",
+                     "Team sync was helpful. Clear next steps.",
+                     "A bit blocked on the API integration. Need to research.",
+                     "Quiet day, focused on coding.",
+                     "Planning session for the next sprint.",
+                     "", // Intentionally include blank entries sometimes
+                     "Reviewed PRs and left feedback.",
+                     "Coffee meeting with Alex. Good chat.",
+                     "Debugging a tricky CSS issue."
+                 ];
+
+                 // Loop backwards from yesterday until we have enough demo entries
+                 while (addedCount < NUM_DEMO_DAYS) {
+                     // Go back one day (use UTC to avoid timezone issues near midnight)
+                     currentDate.setUTCDate(currentDate.getUTCDate() - 1);
+                     const dateKey = getDateKey(currentDate);
+
+                     // Parse the key back to a Date object using UTC to check if it's a weekend
+                     const checkDate = new Date(dateKey + 'T12:00:00Z');
+                     if (!isWeekend(checkDate)) {
+                         // Only add comments for weekdays
+                         const randomComment = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+                         // Add the comment unless it's blank AND a random chance occurs (more likely to add non-blank)
+                         if (randomComment || Math.random() > 0.3) {
+                             demoComments.push({ date: dateKey, comment: randomComment });
+                             addedCount++;
+                         }
+                     }
+                     // Safety break: prevent infinite loop if something goes wrong
+                     if (currentDate < new Date('2020-01-01')) break;
+                 }
+
+                 // Sort demo comments just in case (newest first) before saving
+                 demoComments.sort((a, b) => b.date.localeCompare(a.date));
+
+                 try {
+                     // Save the generated demo comments to localStorage
+                     localStorage.setItem(STORAGE_KEY, JSON.stringify(demoComments));
+                     // Set the flag so we don't run this again
+                     localStorage.setItem(DEMO_DATA_FLAG, 'true');
+                     console.log(`Demo comments added for ${addedCount} weekdays.`);
+                 } catch (e) {
+                     console.error("Error saving demo comments:", e);
+                 }
+             }
+
+
+            /**
+             * Handles clicks on the main action button (Save Note / Save Changes / Edit Note).
+             * Determines the current action based on the UI state, validates input,
+             * saves the comment, and updates the UI state.
+             */
+            function handleActionClick() {
+                // Determine the current mode based on button text (or class)
+                let currentState = 'new'; // Assume new unless button says otherwise
+                if (actionButton.textContent === 'Edit Note') currentState = 'viewing';
+                if (actionButton.textContent === 'Save Changes') currentState = 'editing';
+
+                if (currentState === 'new' || currentState === 'editing') {
+                    // --- Save or Update Action ---
+                    const commentText = commentField.value; // Get text (allow leading/trailing spaces)
+
+                    // 1. Validate Input
+                    if (commentText.length > MAX_COMMENT_LENGTH) {
+                        confirmationMessage.textContent = `Note is too long! Max ${MAX_COMMENT_LENGTH} characters.`;
+                        confirmationMessage.style.color = 'var(--color-error)'; // Use error color
+                        commentField.focus(); // Bring focus back to the field
+                        return; // Stop the save process
+                    }
+
+                    // 2. Save the comment
+                    const todayKey = getDateKey(new Date());
+                    const saveSuccessful = saveCommentToStorage(todayKey, commentText);
+
+                    // 3. Update UI based on save result
+                    if (saveSuccessful) {
+                        confirmationMessage.textContent = "Note saved successfully!";
+                        confirmationMessage.style.color = 'var(--color-success)'; // Use success color
+                        setState('viewing'); // Change state to view/edit mode
+                        renderPastComments(); // Update history list immediately (in case it affects display)
+                    }
+                    // Error message is handled within saveCommentToStorage if save fails
+
+                } else if (currentState === 'viewing') {
+                    // --- Edit Action ---
+                    // User clicked 'Edit Note', switch to editing mode
+                    setState('editing');
+                }
+            }
+
+            /**
+             * Loads the comment specifically for the *current day* (if one exists)
+             * into the textarea and sets the initial UI state accordingly ('viewing' or 'new').
+             */
+            function loadCurrentCommentAndSetState() {
+                 const allComments = loadAllComments();
+                 const todayKey = getDateKey(new Date());
+                 // Find if there's an entry matching today's date key
+                 const todaysEntry = allComments.find(item => item.date === todayKey);
+
+                 if (todaysEntry) {
+                     // If today's comment exists, load it into the field
+                     commentField.value = todaysEntry.comment || ""; // Handle potentially empty saved comment
+                     setState('viewing'); // Set state to view/edit mode
+                 } else {
+                     // If no comment exists for today, clear the field
+                     commentField.value = "";
+                     setState('new');     // Set state to allow new entry
+                 }
+                 updateCharCounter(); // Update counter based on loaded/cleared value
+            }
+
+
+            // --- Initialization ---
+            // This function runs once when the page is ready.
+            function initialize() {
+                console.log("Initializing Daily Comment Log...");
+                setState('loading'); // Show loading state initially
+
+                // Display the current date in a nice format
+                currentDateDisplay.textContent = formatDisplayDate(new Date());
+
+                // Set up event listeners
+                commentField.addEventListener('input', updateCharCounter); // Update counter on typing
+                actionButton.addEventListener('click', handleActionClick); // Handle button clicks
+
+                // Add demo data if this is the first run and no data exists
+                populateDemoComments();
+
+                // Render the history section first
+                renderPastComments();
+
+                // Load today's comment (if any) and set the initial state for the entry section
+                loadCurrentCommentAndSetState();
+
+                console.log("Comment Log Initialized and Ready.");
+            }
+
+            // --- Run the Application ---
+            initialize();
+
+        });
+    </script>
+
+</body>
+</html>
