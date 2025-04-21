@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Preferences</title>
+    <style>
+        /* Basic Setup & Variables */
+        :root {
+            --font-main: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --radius-md: 12px; /* Container */
+            --radius-sm: 6px;  /* Elements */
+            --space-unit: 8px;
+
+            /* Colors (Light Theme) */
+            --c-bg: #f8f9fa;
+            --c-surface: #ffffff;
+            --c-text: #212529;
+            --c-text-med: #495057;
+            --c-text-light: #6c757d;
+            --c-border: #dee2e6;
+            --c-border-light: #e9ecef;
+            --c-primary: #0d6efd;
+            --c-primary-dark: #0a58ca;
+            --c-secondary: #6c757d;
+            --c-success: #198754;
+            --c-danger: #dc3545;
+            --c-shadow: rgba(0, 0, 0, 0.07);
+            --c-selected-bg: #e7f1ff;
+            --c-selected-border: var(--c-primary);
+            --c-focus-shadow: rgba(13, 110, 253, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; }
+
+        body {
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--c-bg);
+            padding: calc(var(--space-unit) * 3);
+            color: var(--c-text);
+            line-height: 1.6;
+        }
+
+        /* Container */
+        .preference-container {
+            background-color: var(--c-surface);
+            padding: calc(var(--space-unit) * 4) calc(var(--space-unit) * 5);
+            border-radius: var(--radius-md);
+            box-shadow: 0 6px 22px var(--c-shadow);
+            width: 100%;
+            max-width: 550px;
+        }
+
+        /* Typography */
+        h2 {
+            text-align: center; margin: 0 0 calc(var(--space-unit) * 3); font-size: 1.6rem;
+            font-weight: 600;
+        }
+        .current-date {
+             text-align: center; font-size: 0.95rem; color: var(--c-text-light);
+             margin-bottom: calc(var(--space-unit) * 3.5);
+        }
+
+        /* Form Sections */
+        fieldset {
+            border: none; padding: 0;
+            margin: 0 0 calc(var(--space-unit) * 3.5);
+        }
+        legend {
+            font-size: 1.1rem; font-weight: 600; color: var(--c-text-med);
+            margin-bottom: calc(var(--space-unit) * 1.5); padding: 0;
+            width: 100%; text-align: left;
+        }
+
+        /* Primary Method Selection (Checkbox Grid) */
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: calc(var(--space-unit) * 1.5);
+        }
+
+        .options-grid label { /* The clickable card */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: calc(var(--space-unit) * 2);
+            border: 2px solid var(--c-border-light); border-radius: var(--radius-sm);
+            cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+            min-height: 100px; position: relative;
+        }
+        .options-grid input[type="checkbox"] { /* Hide actual checkbox */
+             position: absolute; opacity: 0; width: 1px; height: 1px; margin: -1px;
+             overflow: hidden; clip: rect(0, 0, 0, 0);
+        }
+        /* Checked state style for the label */
+        .options-grid input[type="checkbox"]:checked + label {
+            border-color: var(--c-selected-border);
+            background-color: var(--c-selected-bg);
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        /* Focus style for keyboard navigation */
+        .options-grid input[type="checkbox"]:focus-visible + label {
+             outline: 2px solid var(--c-primary); outline-offset: 2px;
+             border-color: var(--c-selected-border);
+         }
+
+        .option-icon { font-size: 2rem; margin-bottom: var(--space-unit); }
+        .option-text { font-size: 0.95rem; font-weight: 500; color: var(--c-text-med); }
+         /* Text style change when selected */
+         .options-grid input[type="checkbox"]:checked + label .option-text {
+             color: var(--c-primary); font-weight: 600;
+          }
+
+
+        /* Secondary Context Checkboxes */
+        .context-option { /* Renamed for clarity */
+            display: flex; align-items: center; gap: var(--space-unit);
+            margin-bottom: var(--space-unit); padding: calc(var(--space-unit) * 1.5);
+            border: 1px solid var(--c-border-light); border-radius: var(--radius-sm);
+            cursor: pointer; transition: background-color 0.2s ease;
+        }
+         .context-option:hover { background-color: var(--c-border-light); }
+
+        .context-option input[type="checkbox"] { /* The visible checkbox */
+            width: 18px; height: 18px; accent-color: var(--c-primary); /* Nice color */
+            flex-shrink: 0; cursor: pointer;
+        }
+        .context-option label { font-size: 0.95rem; color: var(--c-text-med); cursor: pointer; flex-grow: 1; }
+        /* Focus style for the visible checkbox */
+        .context-option input[type="checkbox"]:focus-visible {
+             outline: 2px solid var(--c-primary); outline-offset: 2px;
+        }
+
+        /* Action Button & Status */
+        .action-area { text-align: center; margin-top: calc(var(--space-unit) * 4); }
+        .action-button {
+            display: inline-block; color: white; padding: 12px 35px; border: none;
+            border-radius: var(--radius-sm); font-size: 1.05rem; font-weight: 500;
+            cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease;
+            min-width: 180px; text-align: center; background-color: var(--c-primary);
+        }
+        .action-button:hover { background-color: var(--c-primary-dark); }
+        .action-button:active { transform: scale(0.98); }
+        .action-button:disabled { background-color: var(--c-text-light); opacity: 0.7; cursor: not-allowed; transform: scale(1); }
+
+        .last-updated {
+            font-size: 0.85rem; color: var(--c-text-light); margin-top: var(--space-unit);
+            min-height: 1.2em; /* Prevent jumping */
+        }
+
+        /* --- Toast Notifications --- */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 12px 20px; border-radius: var(--radius-sm); color: white; font-size: 0.95rem; box-shadow: 0 4px 10px rgba(0,0,0,0.15); opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease; transform: translateY(20px); }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { background-color: var(--c-success); }
+        .toast.error { background-color: var(--c-danger); }
+        .toast.info { background-color: var(--c-secondary); }
+
+    </style>
+</head>
+<body>
+
+    <div class="preference-container">
+
+        <h2>Set Your Contact Preferences</h2>
+        <div class="current-date" id="currentDate">Loading date...</div>
+
+        <fieldset>
+            <legend>Which ways are okay to reach you today?</legend>
+            <div class="options-grid">
+                <!-- Checkboxes allow multiple selections -->
+                <div>
+                    <input type="checkbox" name="pref" id="pref-chat" value="Chat">
+                    <label for="pref-chat">
+                        <span class="option-icon">💬</span>
+                        <span class="option-text">Chat / IM</span>
+                    </label>
+                </div>
+                <div>
+                    <input type="checkbox" name="pref" id="pref-email" value="Email">
+                    <label for="pref-email">
+                        <span class="option-icon">✉️</span>
+                        <span class="option-text">Email</span>
+                    </label>
+                </div>
+                <div>
+                    <input type="checkbox" name="pref" id="pref-call" value="Call">
+                    <label for="pref-call">
+                        <span class="option-icon">📞</span>
+                        <span class="option-text">Phone Call</span>
+                    </label>
+                </div>
+                <div>
+                    <input type="checkbox" name="pref" id="pref-video" value="Video">
+                    <label for="pref-video">
+                        <span class="option-icon">💻</span>
+                        <span class="option-text">Video Meeting</span>
+                    </label>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Add Context:</legend>
+            <div class="context-option">
+                <input type="checkbox" id="urgent-ok" name="urgentOk">
+                <label for="urgent-ok">Okay to call if urgent</label>
+            </div>
+             <div class="context-option">
+                <input type="checkbox" id="focus-time" name="focusTime">
+                <label for="focus-time">Currently in Focus Time / Do Not Disturb</label>
+            </div>
+        </fieldset>
+
+        <div class="action-area">
+            <button class="action-button" id="saveButton" disabled>Loading...</button>
+            <div class="last-updated" id="lastUpdated">Last updated: Never</div>
+        </div>
+
+    </div>
+
+    <!-- For pop-up messages -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // Simple script to save contact preferences
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Get page elements ---
+            const saveButton = document.getElementById('saveButton');
+            const lastUpdatedDisplay = document.getElementById('lastUpdated');
+            const currentDateDisplay = document.getElementById('currentDate');
+            const urgentOkCheckbox = document.getElementById('urgent-ok');
+            const focusTimeCheckbox = document.getElementById('focus-time');
+            const toastContainer = document.getElementById('toastContainer');
+            const preferenceCheckboxes = document.querySelectorAll('input[name="pref"]'); // Select by name
+
+            // --- Config ---
+            const prefsKey = 'userContactPrefs_MultiChoice'; // Key for primary preferences array
+            const urgentKey = 'userUrgentOk_MultiChoice';
+            const focusKey = 'userFocus_MultiChoice';
+            const timestampKey = 'userContactTimestamp_MultiChoice';
+
+            // --- Helper Functions ---
+
+            // Show simple pop-up messages
+            function showToast(message, type = 'info', duration = 3000) {
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                // Animate in
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => { toast.classList.add('show'); });
+                });
+                // Animate out and remove
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+                 }, duration);
+            }
+
+            // Format timestamp nicely
+            function formatTimestamp(isoString) {
+                if (!isoString) return "Never";
+                try {
+                    const date = new Date(isoString);
+                    // Format: Oct 26, 2023, 10:30 AM
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric',
+                        hour: 'numeric', minute: '2-digit', hour12: true
+                    });
+                } catch (e) {
+                    console.error("Bad date for timestamp:", e);
+                    return "Invalid Date";
+                }
+            }
+
+            // --- Core Functions ---
+
+            // Load saved settings from browser storage
+            function loadPreferences() {
+                try {
+                    // Load primary prefs (defaults to 'Chat' if none saved)
+                    const savedPrefsStr = localStorage.getItem(prefsKey);
+                    const savedPrefs = savedPrefsStr ? JSON.parse(savedPrefsStr) : ['Chat'];
+
+                    const savedUrgent = localStorage.getItem(urgentKey) === 'true';
+                    const savedFocus = localStorage.getItem(focusKey) === 'true';
+                    const savedTimestamp = localStorage.getItem(timestampKey);
+
+                    // Check the boxes based on saved data
+                    preferenceCheckboxes.forEach(checkbox => {
+                        checkbox.checked = savedPrefs.includes(checkbox.value);
+                    });
+                    urgentOkCheckbox.checked = savedUrgent;
+                    focusTimeCheckbox.checked = savedFocus;
+
+                    lastUpdatedDisplay.textContent = `Last updated: ${formatTimestamp(savedTimestamp)}`;
+
+                } catch (e) {
+                    console.error("Couldn't load preferences:", e);
+                    lastUpdatedDisplay.textContent = "Error loading.";
+                    // Set safe defaults on error
+                     preferenceCheckboxes.forEach(checkbox => checkbox.checked = checkbox.value === 'Chat');
+                    urgentOkCheckbox.checked = false;
+                    focusTimeCheckbox.checked = false;
+                }
+            }
+
+            // Save current settings to browser storage
+            function savePreferences() {
+                saveButton.disabled = true;
+                saveButton.textContent = "Saving...";
+
+                try {
+                    // Collect selected primary preferences
+                    const selectedPrefs = [];
+                    preferenceCheckboxes.forEach(checkbox => {
+                        if (checkbox.checked) {
+                            selectedPrefs.push(checkbox.value);
+                        }
+                    });
+
+                    // Collect secondary preferences
+                    const isUrgentOk = urgentOkCheckbox.checked;
+                    const isFocusTime = focusTimeCheckbox.checked;
+                    const timestamp = new Date().toISOString(); // Record save time
+
+                    // Save everything
+                    localStorage.setItem(prefsKey, JSON.stringify(selectedPrefs)); // Save array as string
+                    localStorage.setItem(urgentKey, isUrgentOk);
+                    localStorage.setItem(focusKey, isFocusTime);
+                    localStorage.setItem(timestampKey, timestamp);
+
+                    // Update display and notify user
+                    lastUpdatedDisplay.textContent = `Last updated: ${formatTimestamp(timestamp)}`;
+                    showToast("Preferences saved!", 'success');
+
+                } catch (e) {
+                    console.error("Couldn't save preferences:", e);
+                    showToast("Error saving preferences.", 'error');
+                } finally {
+                     // Re-enable button after a short delay
+                    setTimeout(() => {
+                        saveButton.disabled = false;
+                        saveButton.textContent = "Save Preferences";
+                    }, 300);
+                }
+            }
+
+            // --- Initialize ---
+            function initialize() {
+                 saveButton.textContent = "Loading..."; // Initial state
+
+                 currentDateDisplay.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+                 saveButton.addEventListener('click', savePreferences);
+
+                 // Load any saved settings
+                 loadPreferences();
+
+                 // Ready to use
+                 saveButton.disabled = false;
+                 saveButton.textContent = "Save Preferences";
+            }
+
+            // Run setup when the page is ready
+            initialize();
+        });
+    </script>
+
+</body>
+</html>
